@@ -4,53 +4,53 @@
 
 # Infuser
 
-> **Inspirado en [Goliac](https://github.com/goliac-project/goliac)**: Infuser toma inspiración directa de los principios arquitectónicos y filosóficos de Goliac para ofrecer una solución nativa y liviana para la administración de servidores Gitea.
+> **Inspired by [Goliac](https://github.com/goliac-project/goliac)**: Infuser takes direct inspiration from Goliac's architectural and philosophical principles to offer a native and lightweight solution for Gitea server administration.
 
-Infuser es un motor de **Infraestructura como Código (IaC)** diseñado específicamente para gestionar servidores Gitea y Forgejo (`gitea.alithya.com`).
+Infuser is an **Infrastructure as Code (IaC)** engine specifically designed to manage Gitea and Forgejo servers (`gitea.alithya.com`).
 
-En lugar de crear usuarios, equipos y repositorios manualmente a través de la interfaz web, Infuser permite gestionar la plataforma definiendo el estado deseado en archivos YAML alojados en un repositorio Git central (`infuser-config`).
+Instead of creating users, teams, and repositories manually through the web interface, Infuser allows you to manage the platform by defining the desired state in YAML files hosted in a central Git repository (`infuser-config`).
 
-## Características Principales
+## Core Features
 
-1. **Gestión Declarativa (IaC)**
-   Define usuarios, organizaciones, equipos, miembros y repositorios usando archivos `.yaml` simples y legibles.
+1. **Declarative Management (IaC)**
+   Define users, organizations, teams, members, and repositories using simple and readable `.yaml` files.
 
-2. **Autoservicio y Auditoría Transparente**
-   Cualquier desarrollador puede solicitar la creación de un repositorio o acceso a un equipo creando un *Pull Request* (PR) en el repositorio de configuración. Todos los cambios quedan registrados por control de versiones, creando un log de auditoría inmutable sobre "quién tiene acceso a qué". Las aprobaciones se gestionan naturalmente con revisiones de código.
+2. **Self-Service and Transparent Auditing**
+   Any developer can request the creation of a repository or access to a team by creating a *Pull Request* (PR) in the configuration repository. All changes are version-controlled, creating an immutable audit log of "who has access to what." Approvals are naturally managed through code reviews.
 
-3. **Automatización del Motor**
-   El corazón de este proyecto es el motor Reconciliador, escrito en Python moderno utilizando `uv`. Compara periódicamente la configuración YAML contra el servidor Gitea y ejecuta los cambios necesarios (crear, modificar o archivar).
+3. **Engine Automation**
+   The core of this project is the Reconciler engine, written in modern Python using `uv`. It periodically compares the YAML configuration against the Gitea server and executes the necessary changes (create, modify, or archive).
 
-4. **Memoria Local y Notificaciones**
-   Posee un sistema de estado local que permite notificar ágilmente a los equipos cuando sus solicitudes han sido aplicadas en el servidor, sin necesidad de consultar el 100% de la API constantemente.
+4. **Local Memory and Notifications**
+   It features a local state system that allows for agile notification to teams when their requests have been applied to the server, without needing to constantly hit the API for 100% of the state.
 
-5. **Auditoría Visual Anti Shadow IT 🛡️**
-   Incluye generadores de reportes integrados (`status_report.md` interactivo y matrices CSV/Markdown) que documentan gráficamente qué equipos, usuarios directos y colaboradores externos tienen acceso a proyectos de organización y repositorios personales, visualizando también Protecciones de Ramas sin necesidad de navegar manual en Gitea.
+5. **Visual Anti-Shadow IT Auditing 🛡️**
+   Includes built-in report generators (interactive `status_report.md` and CSV/Markdown matrices) that graphically document which teams, direct users, and external collaborators have access to organization projects and personal repositories, also visualizing Branch Protections without the need to manually navigate Gitea.
 
-## Comenzando (Quick Start)
+## Quick Start
 
-### Requisitos Previos
-- Python >= 3.12 (Recomendado)
-- `uv` (Package Manager ultrarrápido)
+### Prerequisites
+- Python >= 3.12 (Recommended)
+- `uv` (Ultra-fast Package Manager)
 
-### Instalación
+### Installation
 
-1. Clona este proyecto.
-2. Sincroniza las dependencias con `uv`:
+1. Clone this project.
+2. Sync dependencies with `uv`:
    ```bash
    uv sync
    ```
-3. Copia el archivo de entorno de ejemplo:
+3. Copy the example environment file:
    ```bash
    cp .env.example .env
    ```
-4. Edita el archivo `.env` e inserta tu `GITEA_TOKEN` personal de administración y ajusta la `GITEA_URL`.
+4. Edit the `.env` file and insert your personal admin `GITEA_READ_TOKEN`/`GITEA_WRITE_TOKEN` and adjust the `GITEA_URL`.
 
-## Documentación del Proyecto
+## Project Documentation
 
-Toda la documentación técnica y de arquitectura reside en la carpeta `docs/`. Recomendamos revisar los siguientes documentos fundamentales:
+All technical and architectural documentation resides in the `docs/` folder. We recommend reviewing the following fundamental documents:
 
-- [Manual de Operaciones](docs/manual_operaciones.md)
-- [Arquitectura (Engine Specs)](docs/architecture.md)
-- [User Journeys y Stories](docs/user_journeys_stories.md)
-- [Registro de Decisiones (ADRs)](docs/decisions.md)
+- [Operations Manual (Runbook)](docs/operations_manual.md)
+- [Architecture (Engine Specs)](docs/architecture.md)
+- [User Journeys and Stories](docs/user_journeys_stories.md)
+- [Architecture Decision Records (ADRs)](docs/decisions.md)
