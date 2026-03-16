@@ -1,6 +1,6 @@
 # Decision Log (ADR)
 
-Este documento registra todas las decisiones arquitectónicas e implementaciones clave del proyecto GiteAdmin.
+Este documento registra todas las decisiones arquitectónicas e implementaciones clave del proyecto Infuser.
 
 ## Decisiones Tomadas
 

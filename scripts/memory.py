@@ -1,11 +1,11 @@
 import os
 import json
 
-STATE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".giteadmin_state.json")
+STATE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".infuser_state.json")
 
 class LocalMemory:
     """
-    Maneja el estado local (memoria) de las reconciliaciones de GiteAdmin.
+    Maneja el estado local (memoria) de las reconciliaciones de Infuser.
     """
     def __init__(self):
         self.state = self.load()

@@ -1,4 +1,4 @@
-# GiteAdmin (Inspired by Goliac)
+# Infuser (Inspired by Goliac)
 
 ## Objective
 To create an **Infrastructure as Code (IaC)** tool for managing Gitea and Forgejo servers (`gitea.alithya.com`). 
@@ -17,13 +17,13 @@ Inspired by the [Goliac](https://github.com/goliac-project/goliac) project, this
    - Approvals are handled naturally via PR reviews by team owners or administrators.
 
 3. **Automation & Enforcement**
-   - The GiteAdmin engine runs in the background or via CI/CD.
+   - The Infuser engine runs in the background or via CI/CD.
    - When a PR is merged, the tool automatically reconciles the changes using the Gitea/Forgejo REST API (e.g., creating the repository, setting permissions, or archiving old projects).
 
 ## Proposed Configuration Structure
 
 ```text
-giteadmin-config/
+infuser-config/
 ├── users/
 │   ├── alice.yaml
 │   └── bob.yaml

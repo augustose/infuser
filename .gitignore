@@ -14,7 +14,7 @@ venv.bak/
 .env
 
 # Current State / Secrets / Temp Output
-.giteadmin_state.json
+.infuser_state.json
 output/
-giteadmin-config/
+infuser-config/
 .goliac_src/

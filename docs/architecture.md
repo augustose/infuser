@@ -1,16 +1,16 @@
-# Arquitectura: GiteAdmin Engine
+# Arquitectura: Infuser Engine
 
-Este documento define la especificación de la arquitectura técnica del motor GiteAdmin.
+Este documento define la especificación de la arquitectura técnica del motor Infuser.
 
 ## 1. Visión General
-GiteAdmin es un motor de Infraestructura como Código (IaC) diseñado para interactuar bidireccionalmente entre un repositorio Git central de configuración (`giteadmin-config`) y la instancia objetivo de Gitea (`gitea.alithya.com`).
+Infuser es un motor de Infraestructura como Código (IaC) diseñado para interactuar bidireccionalmente entre un repositorio Git central de configuración (`infuser-config`) y la instancia objetivo de Gitea (`gitea.alithya.com`).
 
 Se basa en el principio de que los archivos YAML alojados en el repositorio conforman el **Estado Deseado**, y Gitea tiene el **Estado Actual**. 
 
 ## 2. Componentes Principales
 
 1. **Gestor de Estado / YAML Parser (Lector)**
-   - Se encarga de recorrer la carpeta `giteadmin-config` y transformar todos los archivos YAML (`users/`, `teams/`, `repos/`) en estructuras de datos de Python.
+   - Se encarga de recorrer la carpeta `infuser-config` y transformar todos los archivos YAML (`users/`, `teams/`, `repos/`) en estructuras de datos de Python.
 
 2. **Gitea API Client (Ejecutor)**
    - Un cliente HTTP ligero estructurado en múltiples scripts/clases.
@@ -22,7 +22,7 @@ Se basa en el principio de que los archivos YAML alojados en el repositorio conf
    - Genera un Plan de Acción (Crear Equipo, Eliminar Acceso, Archivar Repo).
 
 4. **Memoria Local (State / Cache)**
-   - Archivo JSON local (`.giteadmin_state.json`) o base de datos ligera SQLite (`state.db`).
+   - Archivo JSON local (`.infuser_state.json`) o base de datos ligera SQLite (`state.db`).
    - Propósito: Guardar la firma y estado físico del último "apply" exitoso.
    - Se usará en un futuro inminente para dirigir **Notificaciones** al detectar cuándo un usuario/repo fue específicamente mutado, sin necesidad de consultar el 100% de la API de Gitea en cada corrida.
 

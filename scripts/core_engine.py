@@ -9,7 +9,7 @@ class EngineOptions:
 
 def run_engine(options: EngineOptions):
     print("========================================")
-    print("  🚀 GiteAdmin - Motor de Reconciliación  ")
+    print("  🚀 Infuser - Motor de Reconciliación  ")
     print("========================================")
     if options.dry_run:
         print("[MODO DRY RUN ACTIVADO] - Mostrando Plan de Ejecución.")
@@ -137,7 +137,7 @@ def run_engine(options: EngineOptions):
     print("✅ Misión Cumplida.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="GiteAdmin Reconciliation Engine")
+    parser = argparse.ArgumentParser(description="Infuser Reconciliation Engine")
     parser.add_argument("--apply", action="store_true", help="Aplica permanentemente los cambios en Gitea y guarda en memoria")
     parser.add_argument("--auto-approve", action="store_true", help="Salta el prompt de confirmación si --apply está activo")
     args = parser.parse_args()

@@ -7,7 +7,7 @@ from config import GITEA_URL, HEADERS
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-EXPORT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "giteadmin-config")
+EXPORT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "infuser-config")
 
 def get_paginated(url):
     """Auxiliar function to handle Gitea pagination."""

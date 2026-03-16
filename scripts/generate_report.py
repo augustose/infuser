@@ -14,7 +14,7 @@ def generate_markdown_report():
     
     with open(REPORT_FILE, "w", encoding="utf-8") as f:
         # Header
-        f.write("# 🛡️ GiteAdmin Security & Access Report\n\n")
+        f.write("# 🛡️ Infuser Security & Access Report\n\n")
         f.write(f"> **Generated on:** `{datetime.now().strftime('%B %d, %Y - %H:%M')}` | **Users:** `{num_users}` | **Organizations:** `{num_orgs}`\n\n")
         f.write("---\n\n")
         

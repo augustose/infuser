@@ -1,13 +1,13 @@
-# Manual de Operaciones - GiteAdmin
+# Manual de Operaciones - Infuser
 
-Este documento actúa como guía principal (Runbook) para la interacción de ingenieros, desarrolladores y administradores con GiteAdmin.
+Este documento actúa como guía principal (Runbook) para la interacción de ingenieros, desarrolladores y administradores con Infuser.
 
 ## 1. Operativas del Día a Día para Desarrolladores
 
 ### Solicitar un Nuevo Repositorio o Modificar Permisos
 Toda alteración a la infraestructura de Gitea (crear repositorios, modificar equipos, invitar usuarios) se realiza mediante GitOps:
 1. Clonar localmente este repositorio.
-2. Navegar a la carpeta `giteadmin-config/` y crear o modificar el archivo YAML correspondiente (ej. `organizations/mi-org/repositories/app.yaml`).
+2. Navegar a la carpeta `infuser-config/` y crear o modificar el archivo YAML correspondiente (ej. `organizations/mi-org/repositories/app.yaml`).
 3. Hacer push y mandar un Pull Request (PR).
 4. Una vez aprobado y fusionado a `main`, el Reconciliador aplicará los cambios automáticamente.
 
@@ -39,11 +39,11 @@ Si la memoria local se corrompe o necesitas una fotografía fresca desde cero di
 ```bash
 uv run scripts/export_state.py
 ```
-Esto descargará todos los usuarios, organizaciones, repositorios personales, protecciones de ramas y colaboradores directos en archivos YAML estructurados bajo la carpeta `giteadmin-config/`.
+Esto descargará todos los usuarios, organizaciones, repositorios personales, protecciones de ramas y colaboradores directos en archivos YAML estructurados bajo la carpeta `infuser-config/`.
 
 ## 3. Auditoría y Seguridad (Generación de Reportes) 📊
 
-GiteAdmin incluye potentes herramientas de generación de reportes visuales ideados para auditorías de seguridad y *compliance*.
+Infuser incluye potentes herramientas de generación de reportes visuales ideados para auditorías de seguridad y *compliance*.
 
 **Reporte de Estado General y Visual (Markdown):**
 ```bash

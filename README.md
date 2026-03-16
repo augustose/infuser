@@ -1,10 +1,10 @@
-# GiteAdmin
+# Infuser
 
-> **Inspirado en [Goliac](https://github.com/goliac-project/goliac)**: GiteAdmin toma inspiración directa de los principios arquitectónicos y filosóficos de Goliac para ofrecer una solución nativa y liviana para la administración de servidores Gitea.
+> **Inspirado en [Goliac](https://github.com/goliac-project/goliac)**: Infuser toma inspiración directa de los principios arquitectónicos y filosóficos de Goliac para ofrecer una solución nativa y liviana para la administración de servidores Gitea.
 
-GiteAdmin es un motor de **Infraestructura como Código (IaC)** diseñado específicamente para gestionar servidores Gitea y Forgejo (`gitea.alithya.com`).
+Infuser es un motor de **Infraestructura como Código (IaC)** diseñado específicamente para gestionar servidores Gitea y Forgejo (`gitea.alithya.com`).
 
-En lugar de crear usuarios, equipos y repositorios manualmente a través de la interfaz web, GiteAdmin permite gestionar la plataforma definiendo el estado deseado en archivos YAML alojados en un repositorio Git central (`giteadmin-config`).
+En lugar de crear usuarios, equipos y repositorios manualmente a través de la interfaz web, Infuser permite gestionar la plataforma definiendo el estado deseado en archivos YAML alojados en un repositorio Git central (`infuser-config`).
 
 ## Características Principales
 

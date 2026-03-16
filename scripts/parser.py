@@ -1,7 +1,7 @@
 import os
 import yaml
 
-CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "giteadmin-config")
+CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "infuser-config")
 
 def read_yaml(filepath):
     """Devuelve el contenido YAML o None si el archivo es ignorado."""
@@ -16,7 +16,7 @@ def read_yaml(filepath):
 
 def parse_all_config():
     """
-    Recorre el giteadmin-config/ y compila en memoria un 'estado deseado'.
+    Recorre el infuser-config/ y compila en memoria un 'estado deseado'.
     """
     desired_state = {
         "users": {},
