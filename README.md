@@ -18,6 +18,9 @@ En lugar de crear usuarios, equipos y repositorios manualmente a través de la i
 4. **Memoria Local y Notificaciones**
    Posee un sistema de estado local que permite notificar ágilmente a los equipos cuando sus solicitudes han sido aplicadas en el servidor, sin necesidad de consultar el 100% de la API constantemente.
 
+5. **Auditoría Visual Anti Shadow IT 🛡️**
+   Incluye generadores de reportes integrados (`status_report.md` interactivo y matrices CSV/Markdown) que documentan gráficamente qué equipos, usuarios directos y colaboradores externos tienen acceso a proyectos de organización y repositorios personales, visualizando también Protecciones de Ramas sin necesidad de navegar manual en Gitea.
+
 ## Comenzando (Quick Start)
 
 ### Requisitos Previos

@@ -4,44 +4,59 @@ Este documento actúa como guía principal (Runbook) para la interacción de ing
 
 ## 1. Operativas del Día a Día para Desarrolladores
 
-### Solicitar un Nuevo Repositorio
-Para crear un nuevo repositorio en un equipo en Gitea, deberás:
-1. Clonar localmente el repositorio central (`giteadmin-config`).
-2. Crear un archivo YAML bajo el path `teams/[nombre_equipo]/[nombre_repo].yaml`.
-3. El archivo debe contener la especificación mínima de repositorio (ver sección Plantillas).
-4. Hacer push y mandar un PR al equipo propietario (Reviewers obligatorios asignados al equipo).
-5. Una vez aprobado, el sistema de CI (u operación manual del Reconciliador) detectará y creará el repositorio en la organización adecuada en Gitea.
-
-### Añadir o Remover Miembros
-1. Localiza el archivo `team.yaml` dentro de la carpeta del equipo (ej. `teams/backend/team.yaml`).
-2. Agrega o elimina el nombre del usuario de las claves `owners:` o `members:`.
-3. Generar un PR, y al fusionarse a main, los permisos de Gitea se sincronizarán y se perderá/conseguirá el acceso instantáneamente.
+### Solicitar un Nuevo Repositorio o Modificar Permisos
+Toda alteración a la infraestructura de Gitea (crear repositorios, modificar equipos, invitar usuarios) se realiza mediante GitOps:
+1. Clonar localmente este repositorio.
+2. Navegar a la carpeta `giteadmin-config/` y crear o modificar el archivo YAML correspondiente (ej. `organizations/mi-org/repositories/app.yaml`).
+3. Hacer push y mandar un Pull Request (PR).
+4. Una vez aprobado y fusionado a `main`, el Reconciliador aplicará los cambios automáticamente.
 
 ## 2. Operativas para el Administrador del Motor
 
 ### Ejecutar el Reconciliador Manualmente
-Para forzar o probar un sincronismo desde tu terminal (`uv` es necesario):
+Para forzar o probar una sincronización desde tu terminal local (`uv` es necesario):
 
+**1. Ver el Plan de Ejecución (Dry Run):**
 ```bash
-uv run scripts/core_diff_engine.py --dry-run
+uv run scripts/core_engine.py --dry-run
 ```
-> **Nota**: El flag `--dry-run` es vital. Nunca ejecutes la sincronización manual sin ver primero el plan generado, o el motor puede borrar entidades no mapeadas.
+> **Nota:** Nunca ejecutes la sincronización manual sin ver primero el plan generado en modo "dry-run".
 
-### Monitoreo del Estado Local
-El estado actual que ha reconocido el motor respecto al último "apply" exitoso se guarda localmente en `.giteadmin_state.db`. Si algo se corrompe por errores de red con la API de Gitea:
-1. Ejecuta el comando de reconstrucción de estado:
-   ```bash
-   uv run scripts/rebuild_state.py
-   ```
-   Esto forzará a descargar todo el árbol de Gitea desde 0.
+**2. Aplicar los Cambios (Apply):**
+```bash
+uv run scripts/core_engine.py --apply
+```
+Esto empujará permanentemente los cambios a través de la API de Gitea y actualizará la Memoria Local (`.giteadmin_state.json`).
 
-## 3. Resolución de Problemas (Troubleshooting)
+### Exportar el Estado Actual de Gitea
+Si la memoria local se corrompe o necesitas una fotografía fresca desde cero directo del servidor, corre:
+```bash
+uv run scripts/export_state.py
+```
+Esto descargará todos los usuarios, organizaciones, repositorios personales, protecciones de ramas y colaboradores directos en archivos YAML estructurados bajo la carpeta `giteadmin-config/`.
 
-### Error 40X en Gitea: Authentication Failed
-*   **Síntoma**: Los scripts de Python (o el Runner) caen con HTTP 401/403.
-*   **Razón**: El `GITEA_TOKEN` de Administrador presente en `.env` (o en GitHub Actions secrets) expiró o fue revocado.
-*   **Arreglo**: Entra a Gitea, ve a Perfil > Applications y revoca el viejo. Genera uno nuevo y reemplázalo en las configuraciones correspondientes.
+## 3. Auditoría y Seguridad (Generación de Reportes) 📊
 
-### Un YAML no está siendo detectado
-*   **Síntoma**: El script de Python dice "Nothing to do", a pesar de haber integrado tu PR hace minutos.
-*   **Arreglo**: Verifica la sintaxis del YAML usando herramientas online o un IDE plugin; el engine descarta YAMLs malformados. Revisa los logs de error del motor en la salida estándar.
+GiteAdmin incluye potentes herramientas de generación de reportes visuales ideados para auditorías de seguridad y *compliance*.
+
+**Reporte de Estado General y Visual (Markdown):**
+```bash
+uv run scripts/generate_report.py
+```
+Genera un documento interactivo (colapsable) detallando qué equipos y administradores acceden a qué proyecto, incluyendo espacios de trabajo personales de los usuarios. Queda en `output/reports/status_report.md`.
+
+**Matriz de Accesos y Permisos (CSV/Markdown over time):**
+```bash
+uv run scripts/generate_matrix_report.py
+```
+Crea una "Access Matrix" cruzando Proyectos (filas) y Usuarios (columnas), extrayendo el permiso máximo agregado por cada usuario. Ideal para comparar la evolución de permisos a lo largo del tiempo. Queda en `output/reports/matrix/`.
+
+## 4. Resolución de Problemas (Troubleshooting)
+
+### Error HTTP 401/403 en la API de Gitea
+*   **Síntoma**: Los scripts caen o muestran errores de autenticación.
+*   **Razón**: El `GITEA_TOKEN` de Administrador presente en `.env` expiró o fue revocado.
+*   **Arreglo**: Entra a Gitea, ve a Perfil > Applications y genera un nuevo token con permisos en todo el stack. Reemplázalo en el archivo local `.env`.
+
+### Un YAML no está siendo detectado por el Reconciliador
+*   **Arreglo**: Verifica la sintaxis del YAML. El motor `parser.py` está diseñado para fallar silenciosa pero positivamente si un archivo no tiene el formato esperado (`apiVersion` y `kind` requeridos).

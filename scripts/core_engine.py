@@ -42,22 +42,28 @@ def run_engine(options: EngineOptions):
             print("  🚫 (Omitido guardar en modo Dry Run).")
         return # Terminamos aquí la primera corrida
 
+    import api_actions
+
     # 3. Diff Engine (Básico para esta iteración)
     print("\n[3/3] Calculando Diferencias (Diff)...")
     changes_detected = 0
 
     # Diff Usuarios
-    current_users = set(memory.state["users"].keys())
-    desired_users = set(desired_state["users"].keys())
+    current_users = set(memory.state.get("users", {}).keys())
+    desired_users = set(desired_state.get("users", {}).keys())
 
     users_to_create = desired_users - current_users
     users_to_delete = current_users - desired_users # Opciones de archivado, por ej.
 
     for user in users_to_create:
         print(f"  ➕ [CREAR] Usuario: {user}")
+        if not options.dry_run:
+            api_actions.create_user(user, desired_state["users"][user]["spec"])
         changes_detected += 1
     for user in users_to_delete:
         print(f"  ➖ [ELIMINAR/ARCHIVAR] Usuario: {user}")
+        if not options.dry_run:
+            api_actions.delete_user(user)
         changes_detected += 1
 
     # Diff Orgs y Teams
@@ -66,6 +72,8 @@ def run_engine(options: EngineOptions):
 
     for org in (desired_orgs - current_orgs):
         print(f"  ➕ [CREAR] Organización: {org}")
+        if not options.dry_run:
+            api_actions.create_organization(org, desired_state["organizations"][org]["spec"])
         changes_detected += 1
     
     # Diff interno a las organizaciones
@@ -80,9 +88,18 @@ def run_engine(options: EngineOptions):
         for team in (d_teams - c_teams):
             print(f"  ➕ [CREAR] Equipo: {team} (Org: {org})")
             changes_detected += 1
+            if not options.dry_run:
+                team_id = api_actions.create_team(org, team, d_org["teams"][team].get("spec", {}))
+                # Auto add members
+                if team_id:
+                    for m in d_org["teams"][team].get("spec", {}).get("members", []):
+                        api_actions.add_team_member(team_id, m)
+                
         for team in (c_teams - d_teams):
             print(f"  ➖ [ELIMINAR] Equipo: {team} (Org: {org})")
             changes_detected += 1
+            if not options.dry_run:
+                api_actions.delete_team(org, team)
             
         # Check miembros en los equipos que se mantienen
         for team in d_teams.intersection(c_teams):
@@ -92,9 +109,16 @@ def run_engine(options: EngineOptions):
             for m in (d_members - c_members):
                 print(f"  👥 [AÑADIR MIEMBRO] Usuario '{m}' -> Equipo: {team} (Org: {org})")
                 changes_detected += 1
+                if not options.dry_run:
+                    team_id = api_actions.find_team_id(org, team)
+                    if team_id: api_actions.add_team_member(team_id, m)
+                    
             for m in (c_members - d_members):
                 print(f"  👥 [REMOVER MIEMBRO] Usuario '{m}' <- Equipo: {team} (Org: {org})")
                 changes_detected += 1
+                if not options.dry_run:
+                    team_id = api_actions.find_team_id(org, team)
+                    if team_id: api_actions.remove_team_member(team_id, m)
         
         # Diff Repositorios
         c_repos = set(c_org.get("repositories", {}).keys())
@@ -103,15 +127,25 @@ def run_engine(options: EngineOptions):
         for repo in (d_repos - c_repos):
             print(f"  ➕ [CREAR] Repositorio: {repo} (Org: {org})")
             changes_detected += 1
+            if not options.dry_run:
+                api_actions.create_org_repo(org, repo, d_org["repositories"][repo].get("spec", {}))
+                
         for repo in (c_repos - d_repos):
             print(f"  ➖ [ARCHIVAR] Repositorio: {repo} (Org: {org})")
             changes_detected += 1
+            # Archive action or delete. Usually we archive on Git instead of hard delete.
+            # Omitted API block for safety on Delete Repo unless requested.
 
     print("\n----------------------------------------")
     if changes_detected == 0:
         print("✨ TODO EN SINCRONÍA: El Estado Deseado (YAML) coincide con la Memoria Local.")
     else:
         print(f"⚠️ Se calcularon {changes_detected} cambios para reconciliar la infraestructura.")
+        if not options.dry_run:
+            print("💾 Guardando el nuevo Estado Deseado en la memoria local...")
+            memory.state = desired_state
+            memory.save()
+            print("✅ Aplicado.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GiteAdmin Reconciliation Engine")
