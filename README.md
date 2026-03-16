@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" width="300" alt="Infuser Logo">
+</p>
+
 # Infuser
 
 > **Inspirado en [Goliac](https://github.com/goliac-project/goliac)**: Infuser toma inspiración directa de los principios arquitectónicos y filosóficos de Goliac para ofrecer una solución nativa y liviana para la administración de servidores Gitea.
