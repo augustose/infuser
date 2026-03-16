@@ -49,7 +49,13 @@ GiteAdmin incluye potentes herramientas de generación de reportes visuales idea
 ```bash
 uv run scripts/generate_report.py
 ```
-Genera un documento interactivo (colapsable) detallando qué equipos y administradores acceden a qué proyecto, incluyendo espacios de trabajo personales de los usuarios. Queda en `output/reports/status_report.md`.
+Genera un documento interactivo (colapsable) detallando qué equipos y administradores acceden a qué proyecto. Queda en `output/reports/status_report.md`.
+
+**Reporte Centrado en el Usuario (Offboarding / Access Checks):**
+```bash
+uv run scripts/generate_user_report.py
+```
+Genera un documento vital para revisiones de acceso. Por cada usuario, enumera colapsablemente las Organizaciones, Equipos, Repositorios (directos e indirectos) y Espacios Personales que controla. Útil para verificar que, si alguien es desvinculado de la empresa, ya no conste su acceso en ninguna arista de Gitea de forma independiente o residual. Queda en `output/reports/user_access_report.md`.
 
 **Matriz de Accesos y Permisos (CSV/Markdown over time):**
 ```bash

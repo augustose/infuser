@@ -120,6 +120,13 @@ def run_engine(options: EngineOptions):
             print("🛑 Acción cancelada por el usuario.")
             return
 
+    from config import GITEA_ALLOW_WRITES
+    if not GITEA_ALLOW_WRITES:
+        print("\n🔒 [ERROR FATAL] Operación abortada.")
+        print("   Se intentó usar '--apply' pero la escritura está deshabilitada por configuración (GITEA_ALLOW_WRITES=false).")
+        print("   Por favor modifique las variables de entorno para autorizar escrituras en este ambiente.")
+        return
+
     print("\n🚀 Aplicando cambios de verdad...")
     for msg, func, args in actions:
         func(*args)
