@@ -1,4 +1,6 @@
-# GiteAdmin (Inspired by Goliac)
+# GiteAdmin
+
+> **Inspirado en [Goliac](https://github.com/goliac-project/goliac)**: GiteAdmin toma inspiración directa de los principios arquitectónicos y filosóficos de Goliac para ofrecer una solución nativa y liviana para la administración de servidores Gitea.
 
 GiteAdmin es un motor de **Infraestructura como Código (IaC)** diseñado específicamente para gestionar servidores Gitea y Forgejo (`gitea.alithya.com`).
 
