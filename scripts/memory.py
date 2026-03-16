@@ -5,7 +5,7 @@ STATE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 
 class LocalMemory:
     """
-    Maneja el estado local (memoria) de las reconciliaciones de Infuser.
+    Handles the local state (memory) of Infuser reconciliations.
     """
     def __init__(self):
         self.state = self.load()
@@ -22,13 +22,13 @@ class LocalMemory:
             try:
                 return json.load(f)
             except json.JSONDecodeError:
-                print("WARNING: Archivo de estado corrupto. Retornando estado vacío.")
+                print("WARNING: Corrupted state file. Returning empty state.")
                 return {"users": {}, "organizations": {}}
 
     def save(self):
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(self.state, f, indent=4, ensure_ascii=False)
-        print("Estado local guardado exitosamente.")
+        print("Local state successfully saved.")
 
     def get_user(self, username):
         return self.state["users"].get(username)

@@ -4,7 +4,7 @@ import yaml
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "infuser-config")
 
 def read_yaml(filepath):
-    """Devuelve el contenido YAML o None si el archivo es ignorado."""
+    """Returns YAML content or None if the file is ignored."""
     if not filepath.endswith(".yaml") and not filepath.endswith(".yml"):
         return None
     try:
@@ -16,7 +16,7 @@ def read_yaml(filepath):
 
 def parse_all_config():
     """
-    Recorre el infuser-config/ y compila en memoria un 'estado deseado'.
+    Reads infuser-config/ and compiles a 'desired state' in memory.
     """
     desired_state = {
         "users": {},
@@ -24,7 +24,7 @@ def parse_all_config():
     }
 
     if not os.path.exists(CONFIG_DIR):
-        print(f"Directorio no encontrado: {CONFIG_DIR}")
+        print(f"Directory not found: {CONFIG_DIR}")
         return desired_state
 
     # Parsear users

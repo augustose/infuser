@@ -12,27 +12,27 @@ def run_engine(options: EngineOptions):
     print("  🚀 Infuser - Motor de Reconciliación  ")
     print("========================================")
     if options.dry_run:
-        print("[MODO DRY RUN ACTIVADO] - Mostrando Plan de Ejecución.")
+        print("[DRY RUN MODE ENABLED] - Showing Execution Plan.")
     else:
-        print("[MODO APPLY ACTIVADO] - Evaluando cambios a persistir.")
+        print("[APPLY MODE ENABLED] - Evaluating changes to persist.")
     
     print("\n[1/3] Construyendo el Estado Deseado desde YAMLs...")
     desired_state = parse_all_config()
-    print(f"  👉 Usuarios encontrados: {len(desired_state['users'])}")
-    print(f"  👉 Organizaciones encontradas: {len(desired_state['organizations'])}")
+    print(f"  👉 Users found: {len(desired_state['users'])}")
+    print(f"  👉 Organizations found: {len(desired_state['organizations'])}")
 
     print("\n[2/3] Verificando Memoria Local (Estado Prevío / Actual)...")
     memory = LocalMemory()
     
     if not memory.state["users"] and not memory.state["organizations"]:
-        print("  ⚠️ La memoria local está vacía. Suponiendo que acabamos de exportar el estado desde Gitea.")
-        print("     Construyendo memoria base desde los archivos YAML actuales...")
+        print("  ⚠️ Local memory is empty. Assuming state was just exported from Gitea.")
+        print("     Building base memory from current YAML files...")
         if not options.dry_run:
             memory.state = desired_state
             memory.save()
-            print("  ✅ Memoria inicial persistida con éxito.")
+            print("  ✅ Initial memory persisted successfully.")
         else:
-            print("  🚫 (Omitido guardar en modo Dry Run).")
+            print("  🚫 (Skipped saving in Dry Run mode).")
         return 
 
     import api_actions
@@ -45,16 +45,16 @@ def run_engine(options: EngineOptions):
     desired_users = set(desired_state.get("users", {}).keys())
 
     for user in (desired_users - current_users):
-        actions.append((f"  ➕ [CREAR] Usuario: {user}", api_actions.create_user, (user, desired_state["users"][user]["spec"])))
+        actions.append((f"  ➕ [CREATE] User: {user}", api_actions.create_user, (user, desired_state["users"][user]["spec"])))
     for user in (current_users - desired_users):
-        actions.append((f"  ➖ [ELIMINAR/ARCHIVAR] Usuario: {user}", api_actions.delete_user, (user,)))
+        actions.append((f"  ➖ [DELETE/ARCHIVE] User: {user}", api_actions.delete_user, (user,)))
 
     # Diff Orgs y Teams
     current_orgs = set(memory.state.get("organizations", {}).keys())
     desired_orgs = set(desired_state.get("organizations", {}).keys())
 
     for org in (desired_orgs - current_orgs):
-        actions.append((f"  ➕ [CREAR] Organización: {org}", api_actions.create_organization, (org, desired_state["organizations"][org]["spec"])))
+        actions.append((f"  ➕ [CREATE] Organization: {org}", api_actions.create_organization, (org, desired_state["organizations"][org]["spec"])))
     
     for org in desired_orgs.intersection(current_orgs):
         c_org = memory.state["organizations"][org]
@@ -70,10 +70,10 @@ def run_engine(options: EngineOptions):
                 if t_id:
                     for m in s.get("members", []):
                         api_actions.add_team_member(t_id, m)
-            actions.append((f"  ➕ [CREAR] Equipo: {team} (Org: {org})", create_team_with_members, ()))
+            actions.append((f"  ➕ [CREATE] Team: {team} (Org: {org})", create_team_with_members, ()))
             
         for team in (c_teams - d_teams):
-            actions.append((f"  ➖ [ELIMINAR] Equipo: {team} (Org: {org})", api_actions.delete_team, (org, team)))
+            actions.append((f"  ➖ [DELETE] Team: {team} (Org: {org})", api_actions.delete_team, (org, team)))
             
         for team in d_teams.intersection(c_teams):
             c_members = set(c_org["teams"][team].get("spec", {}).get("members", []))
@@ -83,48 +83,48 @@ def run_engine(options: EngineOptions):
                 def add_m(o=org, t=team, mbr=m):
                     t_id = api_actions.find_team_id(o, t)
                     if t_id: api_actions.add_team_member(t_id, mbr)
-                actions.append((f"  👥 [AÑADIR MIEMBRO] Usuario '{m}' -> Equipo: {team} (Org: {org})", add_m, ()))
+                actions.append((f"  👥 [ADD MEMBER] Usuario '{m}' -> Equipo: {team} (Org: {org})", add_m, ()))
                 
             for m in (c_members - d_members):
                 def rm_m(o=org, t=team, mbr=m):
                     t_id = api_actions.find_team_id(o, t)
                     if t_id: api_actions.remove_team_member(t_id, mbr)
-                actions.append((f"  👥 [REMOVER MIEMBRO] Usuario '{m}' <- Equipo: {team} (Org: {org})", rm_m, ()))
+                actions.append((f"  👥 [REMOVE MEMBER] Usuario '{m}' <- Equipo: {team} (Org: {org})", rm_m, ()))
         
         c_repos = set(c_org.get("repositories", {}).keys())
         d_repos = set(d_org.get("repositories", {}).keys())
         
         for repo in (d_repos - c_repos):
-            actions.append((f"  ➕ [CREAR] Repositorio: {repo} (Org: {org})", api_actions.create_org_repo, (org, repo, d_org["repositories"][repo].get("spec", {}))))
+            actions.append((f"  ➕ [CREATE] Repository: {repo} (Org: {org})", api_actions.create_org_repo, (org, repo, d_org["repositories"][repo].get("spec", {}))))
                 
         for repo in (c_repos - d_repos):
-            actions.append((f"  ➖ [ARCHIVAR] Repositorio: {repo} (Org: {org})", lambda: None, ()))
+            actions.append((f"  ➖ [ARCHIVE] Repository: {repo} (Org: {org})", lambda: None, ()))
 
     for msg, func, args in actions:
         print(msg)
 
     print("\n----------------------------------------")
     if not actions:
-        print("✨ TODO EN SINCRONÍA: El Estado Deseado (YAML) coincide con la Memoria Local.")
+        print("✨ EVERYTHING IN SYNC: Desired State (YAML) matches Local Memory.")
         return
 
-    print(f"⚠️ Se calcularon {len(actions)} cambios para reconciliar la infraestructura.")
+    print(f"⚠️ Calculated {len(actions)} changes to reconcile infrastructure.")
     
     if options.dry_run:
-        print("💡 Terminado. Ejecuta indicando `--apply` para efectuar estos cambios en el servidor.")
+        print("💡 Finished. Run with `--apply` to commit these changes to the server.")
         return
         
     if not options.auto_approve:
         resp = input("\n¿Estás seguro de que quieres aplicar estos cambios en Gitea? (y/n): ")
         if resp.lower() not in ['y', 'yes', 's', 'si']:
-            print("🛑 Acción cancelada por el usuario.")
+            print("🛑 Action canceled by user.")
             return
 
     from config import GITEA_ALLOW_WRITES
     if not GITEA_ALLOW_WRITES:
         print("\n🔒 [ERROR FATAL] Operación abortada.")
-        print("   Se intentó usar '--apply' pero la escritura está deshabilitada por configuración (GITEA_ALLOW_WRITES=false).")
-        print("   Por favor modifique las variables de entorno para autorizar escrituras en este ambiente.")
+        print("   Attempted to use '--apply' but writes are disabled by configuration (GITEA_ALLOW_WRITES=false).")
+        print("   Please modify environment variables to authorize writes in this environment.")
         return
 
     print("\n🚀 Aplicando cambios de verdad...")
@@ -134,12 +134,12 @@ def run_engine(options: EngineOptions):
     print("\n💾 Guardando el nuevo Estado Deseado en la memoria local...")
     memory.state = desired_state
     memory.save()
-    print("✅ Misión Cumplida.")
+    print("✅ Mission Accomplished.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Infuser Reconciliation Engine")
-    parser.add_argument("--apply", action="store_true", help="Aplica permanentemente los cambios en Gitea y guarda en memoria")
-    parser.add_argument("--auto-approve", action="store_true", help="Salta el prompt de confirmación si --apply está activo")
+    parser.add_argument("--apply", action="store_true", help="Permanently applies changes in Gitea and saves them to memory")
+    parser.add_argument("--auto-approve", action="store_true", help="Skips confirmation prompt if --apply is active")
     args = parser.parse_args()
 
     options = EngineOptions(dry_run=not args.apply, auto_approve=args.auto_approve)

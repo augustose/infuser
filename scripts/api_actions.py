@@ -7,7 +7,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def check_write_allowance():
     if not GITEA_ALLOW_WRITES:
-        print("  [API: BLOQUEO] 🔒 Escritura prevenida. 'GITEA_ALLOW_WRITES' está apagado.")
+        print("  [API: BLOCKED] 🔒 Write prevented. 'GITEA_ALLOW_WRITES' is configured to false.")
         return False
     return True
 
@@ -26,10 +26,10 @@ def create_user(username, spec):
     }
     resp = requests.post(url, headers=WRITE_HEADERS, json=payload, verify=False)
     if resp.status_code == 201:
-        print(f"  [API] ✅ Usuario {username} creado con éxito.")
+        print(f"  [API] ✅ Usuario {username} created successfully.")
         return True
     else:
-        print(f"  [API] ❌ Error creando usuario {username}: {resp.text}")
+        print(f"  [API] ❌ Error creating user {username}: {resp.text}")
         return False
 
 def delete_user(username):
@@ -38,10 +38,10 @@ def delete_user(username):
     url = f"{GITEA_URL}/api/v1/admin/users/{username}"
     resp = requests.delete(url, headers=WRITE_HEADERS, verify=False)
     if resp.status_code in [200, 204]:
-        print(f"  [API] 🗑️ Usuario {username} eliminado.")
+        print(f"  [API] 🗑️ User {username} deleted.")
         return True
     else:
-        print(f"  [API] ❌ Error eliminando usuario {username}: {resp.text}")
+        print(f"  [API] ❌ Error deleting user {username}: {resp.text}")
         return False
 
 def create_organization(org_name, spec):
@@ -55,10 +55,10 @@ def create_organization(org_name, spec):
     }
     resp = requests.post(url, headers=WRITE_HEADERS, json=payload, verify=False)
     if resp.status_code == 201:
-        print(f"  [API] ✅ Organización {org_name} creada.")
+        print(f"  [API] ✅ Organization {org_name} created.")
         return True
     else:
-        print(f"  [API] ❌ Error creando org {org_name}: {resp.text}")
+        print(f"  [API] ❌ Error creating org {org_name}: {resp.text}")
         return False
 
 def create_team(org_name, team_name, spec):
@@ -74,10 +74,10 @@ def create_team(org_name, team_name, spec):
     # units map handle later
     resp = requests.post(url, headers=WRITE_HEADERS, json=payload, verify=False)
     if resp.status_code == 201:
-        print(f"  [API] ✅ Equipo {team_name} ({org_name}) creado.")
+        print(f"  [API] ✅ Team {team_name} ({org_name}) creado.")
         return resp.json().get("id")
     else:
-        print(f"  [API] ❌ Error creando equipo {team_name}: {resp.text}")
+        print(f"  [API] ❌ Error creating team {team_name}: {resp.text}")
         return None
 
 def add_team_member(team_id, username):
@@ -85,10 +85,10 @@ def add_team_member(team_id, username):
     url = f"{GITEA_URL}/api/v1/teams/{team_id}/members/{username}"
     resp = requests.put(url, headers=WRITE_HEADERS, verify=False)
     if resp.status_code in [200, 204]:
-        print(f"  [API] 👤 Usuario {username} añadido al equipo.")
+        print(f"  [API] 👤 User {username} added to team.")
         return True
     else:
-        print(f"  [API] ❌ Error añadiendo {username}: {resp.text}")
+        print(f"  [API] ❌ Error adding {username}: {resp.text}")
         return False
 
 def remove_team_member(team_id, username):
@@ -96,10 +96,10 @@ def remove_team_member(team_id, username):
     url = f"{GITEA_URL}/api/v1/teams/{team_id}/members/{username}"
     resp = requests.delete(url, headers=WRITE_HEADERS, verify=False)
     if resp.status_code in [200, 204]:
-        print(f"  [API] 👤 Usuario {username} removido del equipo.")
+        print(f"  [API] 👤 User {username} removed from team.")
         return True
     else:
-        print(f"  [API] ❌ Error removiendo {username}: {resp.text}")
+        print(f"  [API] ❌ Error removing {username}: {resp.text}")
         return False
 
 def create_org_repo(org_name, repo_name, spec):
@@ -114,10 +114,10 @@ def create_org_repo(org_name, repo_name, spec):
     }
     resp = requests.post(url, headers=WRITE_HEADERS, json=payload, verify=False)
     if resp.status_code == 201:
-        print(f"  [API] ✅ Repositorio {repo_name} creado.")
+        print(f"  [API] ✅ Repository {repo_name} creado.")
         return True
     else:
-        print(f"  [API] ❌ Error creando repo {repo_name}: {resp.text}")
+        print(f"  [API] ❌ Error creating repo {repo_name}: {resp.text}")
         return False
 
 def find_team_id(org_name, team_name):
@@ -136,9 +136,9 @@ def delete_team(org_name, team_name):
         url = f"{GITEA_URL}/api/v1/teams/{team_id}"
         resp = requests.delete(url, headers=WRITE_HEADERS, verify=False)
         if resp.status_code in [200, 204]:
-            print(f"  [API] 🗑️ Equipo {team_name} eliminado.")
+            print(f"  [API] 🗑️ Team {team_name} deleted.")
             return True
         else:
-            print(f"  [API] ❌ Error eliminando equipo {team_name}: {resp.text}")
+            print(f"  [API] ❌ Error deleting team {team_name}: {resp.text}")
             return False
     return False

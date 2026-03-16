@@ -32,7 +32,7 @@ def get_paginated(url):
 
 def export_users():
     """Download all users and save as YAML."""
-    print("Exportando usuarios...")
+    print("Exporting users...")
     users_dir = os.path.join(EXPORT_DIR, "users")
     os.makedirs(users_dir, exist_ok=True)
     
@@ -114,7 +114,7 @@ def export_users():
 
 def export_organizations():
     """Download all organizations, their teams, and repositories as YAML."""
-    print("Exportando organizaciones, equipos y repositorios...")
+    print("Exporting organizations, teams, and repositories...")
     orgs = get_paginated(f"{GITEA_URL}/api/v1/admin/orgs")
     
     for org in orgs:
@@ -212,4 +212,4 @@ def export_organizations():
 if __name__ == "__main__":
     export_users()
     export_organizations()
-    print(f"\n¡Exportación completada! Revisa la carpeta: {EXPORT_DIR}")
+    print(f"\nExport completed! Check folder: {EXPORT_DIR}")
