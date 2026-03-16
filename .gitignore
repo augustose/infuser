@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+env.bak/
+venv.bak/
+
+# Environment Variables
+.env
+
+# Current State / Secrets / Temp Output
+.giteadmin_state.json
+output/
+giteadmin-config/
+.goliac_src/

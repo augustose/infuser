@@ -1,41 +1,53 @@
-# Gitea Administration & Analytics Tools (GiteAdmin)
+# GiteAdmin (Inspired by Goliac)
 
 ## Objective
-To create a structured system (scripts, tools, and documentation) to comprehensively manage, audit, and understand the state of the Gitea server (`gitea.alithya.com`). This project aims to provide clear visibility into projects, users, organizations, access permissions, and overall activity.
+To create an **Infrastructure as Code (IaC)** tool for managing Gitea and Forgejo servers (`gitea.alithya.com`). 
 
-## Core Features & Requirements
+Inspired by the [Goliac](https://github.com/goliac-project/goliac) project, this system will shift organization management (users, teams, permissions, and repositories) from manual UI configurations to declarative YAML manifests stored in a central Git repository. This provides full visibility into projects, users, organizations, and activity out of the box.
 
-1. **Inventory & Discovery**
-   - Retrieve all projects (repositories) hosted on the server.
-   - List all registered users and their profile details.
-   - Enumerate all organizations and their associated teams/members.
+## Core Concepts & Capabilities
 
-2. **Access & Permissions Auditing**
-   - Determine exactly "who has access to what" across all repositories and organizations.
-   - Map user permissions (Read, Write, Admin) for enhanced security and compliance.
+1. **Declarative Management (IaC)**
+   - Define organizations, teams, members, and repositories using simple YAML files.
+   - Example: A single YAML file defines a team's owners/members and configures the repositories they have access to.
 
-3. **Activity Monitoring**
-   - Track and report on user and repository activity.
-   - Monitor recent commits, pull requests, issues, and overall server usage.
+2. **Self-Service & Transparent Auditing**
+   - Regular users can request new teams, new repositories, or access changes by opening a Pull Request against the central configuration repository.
+   - All changes are version-controlled, providing a transparent and immutable audit log of "who has access to what" at any given time.
+   - Approvals are handled naturally via PR reviews by team owners or administrators.
 
-## Proposed File Structure
+3. **Automation & Enforcement**
+   - The GiteAdmin engine runs in the background or via CI/CD.
+   - When a PR is merged, the tool automatically reconciles the changes using the Gitea/Forgejo REST API (e.g., creating the repository, setting permissions, or archiving old projects).
+
+## Proposed Configuration Structure
 
 ```text
-giteadmin/
-├── README.md               # Project overview, setup, and usage instructions
-├── .env                    # Environment variables (Gitea API URL, Tokens)
-├── scripts/                # Core logic and API integration
-│   ├── 01_get_projects.py  # Fetch and list all repositories
-│   ├── 02_get_users.py     # Fetch and list all users
-│   ├── 03_get_orgs.py      # Fetch organizations and teams
-│   ├── 04_audit_access.py  # Map users to their access levels
-│   └── 05_get_activity.py  # Fetch recent platform activities
-├── docs/                   # Internal documentation
-│   └── gitea_api_notes.md  # Reference for Gitea API endpoints used
-└── output/                 # Generated reports (gitignored by default)
-    ├── inventory/          # JSON/CSV exports of users, orgs, and projects
-    └── reports/            # Access audits and activity summaries
+giteadmin-config/
+├── users/
+│   ├── alice.yaml
+│   └── bob.yaml
+├── teams/
+│   ├── frontend/
+│   │   ├── team.yaml             # Defines owners and members of the frontend team
+│   │   └── awesome-website.yaml  # Defines a Gitea repository owned by the frontend team
+│   └── backend/
+│       ├── team.yaml
+│       └── main-api.yaml
+└── archived/                     # Moving a repository YAML here archives it on Gitea
+    └── old-project.yaml
 ```
 
-## Technical Approach
-The system will leverage the **Gitea REST API** to extract data securely. Scripts (preferably written in **Python** for strong data manipulation capabilities) will authenticate via API tokens, paginate through endpoints, and generate easily digestible reports (CSV, JSON, or Markdown).
+## Implementation Path: Forking Goliac vs. Custom Build
+
+We have two main paths to realize this vision for Gitea/Forgejo:
+
+### Option A: Fork and Adapt Goliac
+- **Pros:** Goliac (written in Go) already has parsing logic, reconciliation engines, and a web UI built out.
+- **Cons:** Goliac is deeply integrated with GitHub concepts (e.g., GitHub Apps, specific GitHub REST/GraphQL APIs). Ripping out the GitHub API layer and replacing it with Gitea's API could be a massive refactoring effort.
+
+### Option B: Build a Native Gitea/Forgejo IaC Engine
+- **Pros:** We can tailor it perfectly to Gitea/Forgejo's specific API capabilities without carrying GitHub legacy code. We could build a lightweight, highly maintainable engine in Go or Python.
+- **Cons:** Requires building the parser, differ, and API executor from scratch.
+
+*(For now, we can structure this project to act as the engine that reads these YAMLs and applies them using Gitea/Forgejo API)*
