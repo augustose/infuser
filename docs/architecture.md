@@ -1,45 +1,45 @@
-# Arquitectura: Infuser Engine
+# Architecture: Infuser Engine
 
-Este documento define la especificación de la arquitectura técnica del motor Infuser.
+This document defines the technical architecture specification of the Infuser engine.
 
-## 1. Visión General
-Infuser es un motor de Infraestructura como Código (IaC) diseñado para interactuar bidireccionalmente entre un repositorio Git central de configuración (`infuser-config`) y la instancia objetivo de Gitea (`gitea.alithya.com`).
+## 1. Overview
+Infuser is an Infrastructure as Code (IaC) engine designed to interact bidirectionally between a central Git configuration repository (`infuser-config`) and the target Gitea instance (`gitea.alithya.com`).
 
-Se basa en el principio de que los archivos YAML alojados en el repositorio conforman el **Estado Deseado**, y Gitea tiene el **Estado Actual**. 
+It is based on the principle that the YAML files hosted in the repository form the **Desired State**, and Gitea holds the **Current State**. 
 
-## 2. Componentes Principales
+## 2. Main Components
 
-1. **Gestor de Estado / YAML Parser (Lector)**
-   - Se encarga de recorrer la carpeta `infuser-config` y transformar todos los archivos YAML (`users/`, `teams/`, `repos/`) en estructuras de datos de Python.
+1. **State Manager / YAML Parser (Reader)**
+   - Responsible for traversing the `infuser-config` folder and transforming all YAML files (`users/`, `teams/`, `repos/`, etc.) into Python data structures.
 
-2. **Gitea API Client (Ejecutor)**
-   - Un cliente HTTP ligero estructurado en múltiples scripts/clases.
-   - Interactúa a través de `requests` con Gitea (`/api/v1/`) usando tokens de autenticación de administrador.
+2. **Gitea API Client (Executor)**
+   - A lightweight HTTP client structured across multiple scripts/classes.
+   - Interacts via the `requests` library with Gitea (`/api/v1/`) using administrator authentication tokens.
 
-3. **Reconciliador (Differ Engine)**
-   - El corazón de la aplicación.
-   - Compara el **Estado Deseado** (Memoria local + Configuración YAML) contra el **Estado Actual** de la API.
-   - Genera un Plan de Acción (Crear Equipo, Eliminar Acceso, Archivar Repo).
+3. **Reconciler (Differ Engine)**
+   - The heart of the application.
+   - Compares the **Desired State** (Local Memory + YAML Configuration) against the **Current State** of the API.
+   - Generates an Action Plan (Create Team, Remove Access, Archive Repo, etc.).
 
-4. **Memoria Local (State / Cache)**
-   - Archivo JSON local (`.infuser_state.json`) o base de datos ligera SQLite (`state.db`).
-   - Propósito: Guardar la firma y estado físico del último "apply" exitoso.
-   - Se usará en un futuro inminente para dirigir **Notificaciones** al detectar cuándo un usuario/repo fue específicamente mutado, sin necesidad de consultar el 100% de la API de Gitea en cada corrida.
+4. **Local Memory (State / Cache)**
+   - A local JSON file (`.infuser_state.json`) or a lightweight SQLite database (`state.db`).
+   - Purpose: To save the signature and physical state of the last successful "apply".
+   - Used for routing **Notifications** when detecting that a user/repo was specifically mutated, without needing to query the entire Gitea API on every run.
 
-5. **Módulo de Notificaciones**
-   - Una capa reactiva que despacha eventos cuando el Reconciliador detecta o ejecuta cambios (Ej. "Repositorio Creado").
+5. **Notification Module**
+   - A reactive layer that dispatches events when the Reconciler detects or executes changes (e.g., "Repository Created").
 
-## 3. Flujo de Reconciliación
+## 3. Reconciliation Flow
 
-1. **Trigger Base**: Se ejecuta vía cron, CLI de forma manual o se empaqueta como servicio (Webhook trigger desde GitHub/Gitea Actions).
-2. **Read Config**: Parsea YAMLs.
-3. **Read Memory**: Parsea `state.db`.
-4. **Diffing**: Calcula qué comandos le tiene que enviar a Gitea.
-5. **Apply API**: Llama los endpoints (`POST /orgs`, `POST /repos`, etc).
-6. **Update Memory & Notify**: Actualiza la memoria local e invoca el módulo que lanza avisos.
+1. **Base Trigger**: Executed via cron, manually through the CLI, or packaged as a service (Webhook trigger from GitHub/Gitea Actions).
+2. **Read Config**: Parses YAMLs.
+3. **Read Memory**: Parses `.infuser_state.json`.
+4. **Diffing**: Calculates the required payload commands to send to Gitea.
+5. **Apply API**: Calls the endpoints (`POST /orgs`, `POST /repos`, etc.).
+6. **Update Memory & Notify**: Updates the local memory and invokes the notification module.
 
-## 4. Stack Tecnológico
-- **Lenguaje:** Python
+## 4. Technology Stack
+- **Language:** Python
 - **Package Manager:** `uv`
-- **Librerías Core:** `requests`, `pyyaml`
-- **Memoria:** JSON file / SQLite embed.
+- **Core Libraries:** `requests`, `pyyaml`
+- **Memory:** JSON file / SQLite embed.
