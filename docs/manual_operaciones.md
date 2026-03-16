@@ -16,17 +16,23 @@ Toda alteración a la infraestructura de Gitea (crear repositorios, modificar eq
 ### Ejecutar el Reconciliador Manualmente
 Para forzar o probar una sincronización desde tu terminal local (`uv` es necesario):
 
-**1. Ver el Plan de Ejecución (Dry Run):**
+**1. Ver el Plan de Ejecución:**
 ```bash
-uv run scripts/core_engine.py --dry-run
+uv run scripts/core_engine.py
 ```
-> **Nota:** Nunca ejecutes la sincronización manual sin ver primero el plan generado en modo "dry-run".
+> **Nota:** Por seguridad, el modo Plan (Dry-Run) es el default. El motor analizará todos los YAML y los cruzará contra su memoria, y te dirá qué entidades considera que tiene que crear, modificar o borrar, sin tocar nada en producción.
 
-**2. Aplicar los Cambios (Apply):**
+**2. Aplicar los Cambios (Modo Interactivo):**
 ```bash
 uv run scripts/core_engine.py --apply
 ```
-Esto empujará permanentemente los cambios a través de la API de Gitea y actualizará la Memoria Local (`.giteadmin_state.json`).
+Al correr este comando, verás la lista propuesta y el sistema pausará solicitándote confirmación obligatoria (`yes/no`). Si aceptas, persistirá las transacciones sobre Gitea.
+
+**3. Aplicar Cambios sin Intervención (CI/CD):**
+```bash
+uv run scripts/core_engine.py --apply --auto-approve
+```
+Este flag bypassa el prompt interactivo y ejecuta las transacciones de inmediato. Recomendado primordialmente para GitHub Actions / Gitea Actions instanciadas por PR Merges.
 
 ### Exportar el Estado Actual de Gitea
 Si la memoria local se corrompe o necesitas una fotografía fresca desde cero directo del servidor, corre:

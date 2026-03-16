@@ -3,34 +3,27 @@ from parser import parse_all_config
 from memory import LocalMemory
 
 class EngineOptions:
-    def __init__(self, dry_run=True):
+    def __init__(self, dry_run=True, auto_approve=False):
         self.dry_run = dry_run
-
-def compare_dicts(name, path, current, desired):
-    """Compara 2 diccionarios y reporta diferencias. Para simplificar, comparamos el 'spec' principal."""
-    # Para la prueba, simplemente comprobaremos la presencia / ausencia total por el momento.
-    pass
+        self.auto_approve = auto_approve
 
 def run_engine(options: EngineOptions):
     print("========================================")
     print("  🚀 GiteAdmin - Motor de Reconciliación  ")
     print("========================================")
     if options.dry_run:
-        print("[MODO DRY RUN ACTIVADO] - No se realizarán cambios en Gitea.")
+        print("[MODO DRY RUN ACTIVADO] - Mostrando Plan de Ejecución.")
+    else:
+        print("[MODO APPLY ACTIVADO] - Evaluando cambios a persistir.")
     
-    # 1. Obtenemos el estado deseado (Archivos YAML locales)
     print("\n[1/3] Construyendo el Estado Deseado desde YAMLs...")
     desired_state = parse_all_config()
     print(f"  👉 Usuarios encontrados: {len(desired_state['users'])}")
     print(f"  👉 Organizaciones encontradas: {len(desired_state['organizations'])}")
 
-    # 2. Obtenemos el estado actual desde la Memoria Local (o asume un blank si no existe aún)
-    # Por ahora tomamos la decisión de inicializar el state = local si no existe para que nuestro próximo engine pase se encargue.
     print("\n[2/3] Verificando Memoria Local (Estado Prevío / Actual)...")
     memory = LocalMemory()
     
-    # IMPORTANTE: Si es la primera vez (estado vacío pero tenemos YAMLs locales),
-    # tomaremos los YAMLs como nuestra memoria base, como si la 'Exportación' fuera el state(0).
     if not memory.state["users"] and not memory.state["organizations"]:
         print("  ⚠️ La memoria local está vacía. Suponiendo que acabamos de exportar el estado desde Gitea.")
         print("     Construyendo memoria base desde los archivos YAML actuales...")
@@ -40,124 +33,107 @@ def run_engine(options: EngineOptions):
             print("  ✅ Memoria inicial persistida con éxito.")
         else:
             print("  🚫 (Omitido guardar en modo Dry Run).")
-        return # Terminamos aquí la primera corrida
+        return 
 
     import api_actions
 
-    # 3. Diff Engine (Básico para esta iteración)
-    print("\n[3/3] Calculando Diferencias (Diff)...")
-    changes_detected = 0
+    print("\n[3/3] Eventos Planeados (Diff Plan)...")
+    actions = []
 
     # Diff Usuarios
     current_users = set(memory.state.get("users", {}).keys())
     desired_users = set(desired_state.get("users", {}).keys())
 
-    users_to_create = desired_users - current_users
-    users_to_delete = current_users - desired_users # Opciones de archivado, por ej.
-
-    for user in users_to_create:
-        print(f"  ➕ [CREAR] Usuario: {user}")
-        if not options.dry_run:
-            api_actions.create_user(user, desired_state["users"][user]["spec"])
-        changes_detected += 1
-    for user in users_to_delete:
-        print(f"  ➖ [ELIMINAR/ARCHIVAR] Usuario: {user}")
-        if not options.dry_run:
-            api_actions.delete_user(user)
-        changes_detected += 1
+    for user in (desired_users - current_users):
+        actions.append((f"  ➕ [CREAR] Usuario: {user}", api_actions.create_user, (user, desired_state["users"][user]["spec"])))
+    for user in (current_users - desired_users):
+        actions.append((f"  ➖ [ELIMINAR/ARCHIVAR] Usuario: {user}", api_actions.delete_user, (user,)))
 
     # Diff Orgs y Teams
     current_orgs = set(memory.state.get("organizations", {}).keys())
     desired_orgs = set(desired_state.get("organizations", {}).keys())
 
     for org in (desired_orgs - current_orgs):
-        print(f"  ➕ [CREAR] Organización: {org}")
-        if not options.dry_run:
-            api_actions.create_organization(org, desired_state["organizations"][org]["spec"])
-        changes_detected += 1
+        actions.append((f"  ➕ [CREAR] Organización: {org}", api_actions.create_organization, (org, desired_state["organizations"][org]["spec"])))
     
-    # Diff interno a las organizaciones
     for org in desired_orgs.intersection(current_orgs):
         c_org = memory.state["organizations"][org]
         d_org = desired_state["organizations"][org]
         
-        # Diff Equipos
         c_teams = set(c_org.get("teams", {}).keys())
         d_teams = set(d_org.get("teams", {}).keys())
         
         for team in (d_teams - c_teams):
-            print(f"  ➕ [CREAR] Equipo: {team} (Org: {org})")
-            changes_detected += 1
-            if not options.dry_run:
-                team_id = api_actions.create_team(org, team, d_org["teams"][team].get("spec", {}))
-                # Auto add members
-                if team_id:
-                    for m in d_org["teams"][team].get("spec", {}).get("members", []):
-                        api_actions.add_team_member(team_id, m)
-                
-        for team in (c_teams - d_teams):
-            print(f"  ➖ [ELIMINAR] Equipo: {team} (Org: {org})")
-            changes_detected += 1
-            if not options.dry_run:
-                api_actions.delete_team(org, team)
+            spec = d_org["teams"][team].get("spec", {})
+            def create_team_with_members(o=org, t=team, s=spec):
+                t_id = api_actions.create_team(o, t, s)
+                if t_id:
+                    for m in s.get("members", []):
+                        api_actions.add_team_member(t_id, m)
+            actions.append((f"  ➕ [CREAR] Equipo: {team} (Org: {org})", create_team_with_members, ()))
             
-        # Check miembros en los equipos que se mantienen
+        for team in (c_teams - d_teams):
+            actions.append((f"  ➖ [ELIMINAR] Equipo: {team} (Org: {org})", api_actions.delete_team, (org, team)))
+            
         for team in d_teams.intersection(c_teams):
             c_members = set(c_org["teams"][team].get("spec", {}).get("members", []))
             d_members = set(d_org["teams"][team].get("spec", {}).get("members", []))
             
             for m in (d_members - c_members):
-                print(f"  👥 [AÑADIR MIEMBRO] Usuario '{m}' -> Equipo: {team} (Org: {org})")
-                changes_detected += 1
-                if not options.dry_run:
-                    team_id = api_actions.find_team_id(org, team)
-                    if team_id: api_actions.add_team_member(team_id, m)
-                    
+                def add_m(o=org, t=team, mbr=m):
+                    t_id = api_actions.find_team_id(o, t)
+                    if t_id: api_actions.add_team_member(t_id, mbr)
+                actions.append((f"  👥 [AÑADIR MIEMBRO] Usuario '{m}' -> Equipo: {team} (Org: {org})", add_m, ()))
+                
             for m in (c_members - d_members):
-                print(f"  👥 [REMOVER MIEMBRO] Usuario '{m}' <- Equipo: {team} (Org: {org})")
-                changes_detected += 1
-                if not options.dry_run:
-                    team_id = api_actions.find_team_id(org, team)
-                    if team_id: api_actions.remove_team_member(team_id, m)
+                def rm_m(o=org, t=team, mbr=m):
+                    t_id = api_actions.find_team_id(o, t)
+                    if t_id: api_actions.remove_team_member(t_id, mbr)
+                actions.append((f"  👥 [REMOVER MIEMBRO] Usuario '{m}' <- Equipo: {team} (Org: {org})", rm_m, ()))
         
-        # Diff Repositorios
         c_repos = set(c_org.get("repositories", {}).keys())
         d_repos = set(d_org.get("repositories", {}).keys())
         
         for repo in (d_repos - c_repos):
-            print(f"  ➕ [CREAR] Repositorio: {repo} (Org: {org})")
-            changes_detected += 1
-            if not options.dry_run:
-                api_actions.create_org_repo(org, repo, d_org["repositories"][repo].get("spec", {}))
+            actions.append((f"  ➕ [CREAR] Repositorio: {repo} (Org: {org})", api_actions.create_org_repo, (org, repo, d_org["repositories"][repo].get("spec", {}))))
                 
         for repo in (c_repos - d_repos):
-            print(f"  ➖ [ARCHIVAR] Repositorio: {repo} (Org: {org})")
-            changes_detected += 1
-            # Archive action or delete. Usually we archive on Git instead of hard delete.
-            # Omitted API block for safety on Delete Repo unless requested.
+            actions.append((f"  ➖ [ARCHIVAR] Repositorio: {repo} (Org: {org})", lambda: None, ()))
+
+    for msg, func, args in actions:
+        print(msg)
 
     print("\n----------------------------------------")
-    if changes_detected == 0:
+    if not actions:
         print("✨ TODO EN SINCRONÍA: El Estado Deseado (YAML) coincide con la Memoria Local.")
-    else:
-        print(f"⚠️ Se calcularon {changes_detected} cambios para reconciliar la infraestructura.")
-        if not options.dry_run:
-            print("💾 Guardando el nuevo Estado Deseado en la memoria local...")
-            memory.state = desired_state
-            memory.save()
-            print("✅ Aplicado.")
+        return
+
+    print(f"⚠️ Se calcularon {len(actions)} cambios para reconciliar la infraestructura.")
+    
+    if options.dry_run:
+        print("💡 Terminado. Ejecuta indicando `--apply` para efectuar estos cambios en el servidor.")
+        return
+        
+    if not options.auto_approve:
+        resp = input("\n¿Estás seguro de que quieres aplicar estos cambios en Gitea? (y/n): ")
+        if resp.lower() not in ['y', 'yes', 's', 'si']:
+            print("🛑 Acción cancelada por el usuario.")
+            return
+
+    print("\n🚀 Aplicando cambios de verdad...")
+    for msg, func, args in actions:
+        func(*args)
+
+    print("\n💾 Guardando el nuevo Estado Deseado en la memoria local...")
+    memory.state = desired_state
+    memory.save()
+    print("✅ Misión Cumplida.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GiteAdmin Reconciliation Engine")
-    # Activamos por defecto --dry-run para máxima seguridad 
-    parser.add_argument("--dry-run", action="store_true", default=True, help="Ejecuta sin mutar el servidor ni la memoria")
-    parser.add_argument("--apply", action="store_true", help="Aplica permanentemente los cambios en Gitea y guarda la memoria")
+    parser.add_argument("--apply", action="store_true", help="Aplica permanentemente los cambios en Gitea y guarda en memoria")
+    parser.add_argument("--auto-approve", action="store_true", help="Salta el prompt de confirmación si --apply está activo")
     args = parser.parse_args()
 
-    # Si pasaron explicitamente --apply, desactivamos dry-run
-    if args.apply:
-        options = EngineOptions(dry_run=False)
-    else:
-        options = EngineOptions(dry_run=True)
-        
+    options = EngineOptions(dry_run=not args.apply, auto_approve=args.auto_approve)
     run_engine(options)
