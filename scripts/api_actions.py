@@ -71,7 +71,10 @@ def create_team(org_name, team_name, spec):
         "includes_all_repositories": spec.get("includes_all_repositories", False),
         "can_create_org_repo": spec.get("can_create_org_repo", False)
     }
-    # units map handle later
+    
+    if "units_map" in spec:
+        payload["units_map"] = spec["units_map"]
+
     resp = requests.post(url, headers=WRITE_HEADERS, json=payload, verify=False)
     if resp.status_code == 201:
         print(f"  [API] ✅ Team {team_name} ({org_name}) creado.")

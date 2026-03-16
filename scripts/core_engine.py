@@ -55,6 +55,22 @@ def run_engine(options: EngineOptions):
 
     for org in (desired_orgs - current_orgs):
         actions.append((f"  ➕ [CREATE] Organization: {org}", api_actions.create_organization, (org, desired_state["organizations"][org]["spec"])))
+        
+        # Si la organización es nueva, también debemos crear sus equipos y repositorios internos definidos
+        d_org = desired_state["organizations"][org]
+        d_teams = set(d_org.get("teams", {}).keys())
+        for team in d_teams:
+            spec = d_org["teams"][team].get("spec", {})
+            def create_team_with_members_new_org(o=org, t=team, s=spec):
+                t_id = api_actions.create_team(o, t, s)
+                if t_id:
+                    for m in s.get("members", []):
+                        api_actions.add_team_member(t_id, m)
+            actions.append((f"  ➕ [CREATE] Team: {team} (Org: {org})", create_team_with_members_new_org, ()))
+            
+        d_repos = set(d_org.get("repositories", {}).keys())
+        for repo in d_repos:
+            actions.append((f"  ➕ [CREATE] Repository: {repo} (Org: {org})", api_actions.create_org_repo, (org, repo, d_org["repositories"][repo].get("spec", {}))))
     
     for org in desired_orgs.intersection(current_orgs):
         c_org = memory.state["organizations"][org]
