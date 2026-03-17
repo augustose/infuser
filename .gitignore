@@ -18,3 +18,4 @@ venv.bak/
 output/
 infuser-config/
 .goliac_src/
+TODO.md
