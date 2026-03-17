@@ -114,7 +114,7 @@ def run_engine(options: EngineOptions):
             actions.append((f"  ➕ [CREATE] Repository: {repo} (Org: {org})", api_actions.create_org_repo, (org, repo, d_org["repositories"][repo].get("spec", {}))))
                 
         for repo in (c_repos - d_repos):
-            actions.append((f"  ➖ [ARCHIVE] Repository: {repo} (Org: {org})", lambda: None, ()))
+            actions.append((f"  ➖ [DELETE] Repository: {repo} (Org: {org})", api_actions.delete_org_repo, (org, repo)))
 
     for msg, func, args in actions:
         print(msg)

@@ -145,3 +145,15 @@ def delete_team(org_name, team_name):
             print(f"  [API] ❌ Error deleting team {team_name}: {resp.text}")
             return False
     return False
+
+def delete_org_repo(org_name, repo_name):
+    """Deletes a repository from an Organization."""
+    if not check_write_allowance(): return False
+    url = f"{GITEA_URL}/api/v1/repos/{org_name}/{repo_name}"
+    resp = requests.delete(url, headers=WRITE_HEADERS, verify=False)
+    if resp.status_code in [200, 204]:
+        print(f"  [API] 🗑️ Repository {repo_name} deleted.")
+        return True
+    else:
+        print(f"  [API] ❌ Error deleting repo {repo_name}: {resp.text}")
+        return False
