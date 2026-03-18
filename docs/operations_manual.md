@@ -63,7 +63,20 @@ uv run scripts/generate_matrix_report.py
 ```
 Creates an "Access Matrix" crossing Projects (rows) and Users (columns), extracting the maximum aggregated permission for each user. Ideal for comparing the evolution of permissions over time. Saved in `output/reports/matrix/`.
 
-## 4. Troubleshooting
+## 4. Scripts Reference
+
+| Script | Purpose | Command |
+|--------|---------|---------|
+| `scripts/core_engine.py` | Reconciliation engine — compares desired state (YAML) against local memory and applies changes to Gitea | `uv run scripts/core_engine.py [--apply] [--auto-approve]` |
+| `scripts/export_state.py` | Exports the current live Gitea state (users, orgs, repos, protections) into YAML files under `infuser-config/` | `uv run scripts/export_state.py` |
+| `scripts/generate_report.py` | General visual status report with collapsible sections per org/repo showing teams, permissions and branch protections | `uv run scripts/generate_report.py` |
+| `scripts/generate_user_report.py` | User-centric access report — lists every org, team and repo each user can reach (useful for offboarding audits) | `uv run scripts/generate_user_report.py` |
+| `scripts/generate_matrix_report.py` | Access matrix crossing repos (rows) vs users (columns) with highest aggregated permission level (CSV + Markdown) | `uv run scripts/generate_matrix_report.py` |
+| `scripts/generate_repo_grid.py` | Repository grid — flat table with repository, description, organization, owner and list of users with access (CSV + Markdown) | `uv run scripts/generate_repo_grid.py` |
+
+All reports are saved under `output/reports/`.
+
+## 5. Troubleshooting
 
 ### HTTP Error 401/403 in the Gitea API
 *   **Symptom**: Scripts crash or throw authentication errors.
