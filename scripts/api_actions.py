@@ -157,3 +157,109 @@ def delete_org_repo(org_name, repo_name):
     else:
         print(f"  [API] ❌ Error deleting repo {repo_name}: {resp.text}")
         return False
+
+def update_user(username, changed_spec):
+    """Updates user properties via PATCH /admin/users/{username}."""
+    if not check_write_allowance(): return False
+    url = f"{GITEA_URL}/api/v1/admin/users/{username}"
+    payload = {"login_name": username, "source_id": 0}
+    for key in ["email", "full_name", "active"]:
+        if key in changed_spec:
+            payload[key] = changed_spec[key]
+    resp = requests.patch(url, headers=WRITE_HEADERS, json=payload, verify=False)
+    if resp.status_code == 200:
+        print(f"  [API] ✅ User {username} updated.")
+        return True
+    else:
+        print(f"  [API] ❌ Error updating user {username}: {resp.text}")
+        return False
+
+def update_repo(owner, repo_name, changed_spec):
+    """Updates repository properties via PATCH /repos/{owner}/{repo}."""
+    if not check_write_allowance(): return False
+    url = f"{GITEA_URL}/api/v1/repos/{owner}/{repo_name}"
+    payload = {}
+    for key in ["description", "private", "default_branch"]:
+        if key in changed_spec:
+            payload[key] = changed_spec[key]
+    if not payload:
+        return True
+    resp = requests.patch(url, headers=WRITE_HEADERS, json=payload, verify=False)
+    if resp.status_code == 200:
+        print(f"  [API] ✅ Repository {owner}/{repo_name} updated.")
+        return True
+    else:
+        print(f"  [API] ❌ Error updating repo {owner}/{repo_name}: {resp.text}")
+        return False
+
+def update_organization(org_name, changed_spec):
+    """Updates organization properties via PATCH /orgs/{org}."""
+    if not check_write_allowance(): return False
+    url = f"{GITEA_URL}/api/v1/orgs/{org_name}"
+    payload = {}
+    for key in ["description", "full_name"]:
+        if key in changed_spec:
+            payload[key] = changed_spec[key]
+    if not payload:
+        return True
+    resp = requests.patch(url, headers=WRITE_HEADERS, json=payload, verify=False)
+    if resp.status_code == 200:
+        print(f"  [API] ✅ Organization {org_name} updated.")
+        return True
+    else:
+        print(f"  [API] ❌ Error updating org {org_name}: {resp.text}")
+        return False
+
+def update_team(org_name, team_name, changed_spec):
+    """Updates team properties via PATCH /teams/{id}."""
+    if not check_write_allowance(): return False
+    team_id = find_team_id(org_name, team_name)
+    if not team_id:
+        print(f"  [API] ❌ Team {team_name} not found in {org_name}.")
+        return False
+    url = f"{GITEA_URL}/api/v1/teams/{team_id}"
+    payload = {}
+    for key in ["permission", "includes_all_repositories", "can_create_org_repo"]:
+        if key in changed_spec:
+            payload[key] = changed_spec[key]
+    if "units_map" in changed_spec:
+        payload["units_map"] = changed_spec["units_map"]
+    if not payload:
+        return True
+    resp = requests.patch(url, headers=WRITE_HEADERS, json=payload, verify=False)
+    if resp.status_code == 200:
+        print(f"  [API] ✅ Team {team_name} ({org_name}) updated.")
+        return True
+    else:
+        print(f"  [API] ❌ Error updating team {team_name}: {resp.text}")
+        return False
+
+def create_user_repo(username, repo_name, spec):
+    """Creates a personal repository for a user via POST /admin/users/{username}/repos."""
+    if not check_write_allowance(): return False
+    url = f"{GITEA_URL}/api/v1/admin/users/{username}/repos"
+    payload = {
+        "name": repo_name,
+        "private": spec.get("private", True),
+        "description": spec.get("description", ""),
+        "default_branch": spec.get("default_branch", "main")
+    }
+    resp = requests.post(url, headers=WRITE_HEADERS, json=payload, verify=False)
+    if resp.status_code == 201:
+        print(f"  [API] ✅ Repository {username}/{repo_name} created.")
+        return True
+    else:
+        print(f"  [API] ❌ Error creating repo {username}/{repo_name}: {resp.text}")
+        return False
+
+def delete_user_repo(username, repo_name):
+    """Deletes a personal repository."""
+    if not check_write_allowance(): return False
+    url = f"{GITEA_URL}/api/v1/repos/{username}/{repo_name}"
+    resp = requests.delete(url, headers=WRITE_HEADERS, verify=False)
+    if resp.status_code in [200, 204]:
+        print(f"  [API] 🗑️ Repository {username}/{repo_name} deleted.")
+        return True
+    else:
+        print(f"  [API] ❌ Error deleting repo {username}/{repo_name}: {resp.text}")
+        return False

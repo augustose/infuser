@@ -2,6 +2,14 @@ import argparse
 from parser import parse_all_config
 from memory import LocalMemory
 
+def diff_specs(current_spec, desired_spec, fields):
+    """Compare two spec dicts on the given fields. Returns list of changed field names."""
+    changed = []
+    for f in fields:
+        if current_spec.get(f) != desired_spec.get(f):
+            changed.append(f)
+    return changed
+
 class EngineOptions:
     def __init__(self, dry_run=True, auto_approve=False):
         self.dry_run = dry_run
@@ -49,6 +57,37 @@ def run_engine(options: EngineOptions):
     for user in (current_users - desired_users):
         actions.append((f"  ➖ [DELETE/ARCHIVE] User: {user}", api_actions.delete_user, (user,)))
 
+    # Diff existing users (properties + personal repos)
+    for user in desired_users.intersection(current_users):
+        c_user = memory.state["users"][user]
+        d_user = desired_state["users"][user]
+
+        # Diff user properties
+        c_spec = c_user.get("spec", {})
+        d_spec = d_user.get("spec", {})
+        user_changed = diff_specs(c_spec, d_spec, ["email", "full_name", "active"])
+        if user_changed:
+            update_spec = {f: d_spec[f] for f in user_changed}
+            actions.append((f"  🔄 [UPDATE] User: {user} — changed: {', '.join(user_changed)}", api_actions.update_user, (user, update_spec)))
+
+        # Diff personal repositories
+        c_repos = set(c_user.get("repositories", {}).keys())
+        d_repos = set(d_user.get("repositories", {}).keys())
+
+        for repo in (d_repos - c_repos):
+            actions.append((f"  ➕ [CREATE] Repository: {repo} (User: {user})", api_actions.create_user_repo, (user, repo, d_user["repositories"][repo].get("spec", {}))))
+
+        for repo in (c_repos - d_repos):
+            actions.append((f"  ➖ [DELETE] Repository: {repo} (User: {user})", api_actions.delete_user_repo, (user, repo)))
+
+        for repo in d_repos.intersection(c_repos):
+            c_repo_spec = c_user["repositories"][repo].get("spec", {})
+            d_repo_spec = d_user["repositories"][repo].get("spec", {})
+            repo_changed = diff_specs(c_repo_spec, d_repo_spec, ["description", "private", "default_branch"])
+            if repo_changed:
+                update_spec = {f: d_repo_spec[f] for f in repo_changed}
+                actions.append((f"  🔄 [UPDATE] Repository: {repo} (User: {user}) — changed: {', '.join(repo_changed)}", api_actions.update_repo, (user, repo, update_spec)))
+
     # Diff Orgs y Teams
     current_orgs = set(memory.state.get("organizations", {}).keys())
     desired_orgs = set(desired_state.get("organizations", {}).keys())
@@ -75,7 +114,15 @@ def run_engine(options: EngineOptions):
     for org in desired_orgs.intersection(current_orgs):
         c_org = memory.state["organizations"][org]
         d_org = desired_state["organizations"][org]
-        
+
+        # Diff org properties
+        c_org_spec = c_org.get("spec", {})
+        d_org_spec = d_org.get("spec", {})
+        org_changed = diff_specs(c_org_spec, d_org_spec, ["description", "full_name"])
+        if org_changed:
+            update_spec = {f: d_org_spec[f] for f in org_changed}
+            actions.append((f"  🔄 [UPDATE] Organization: {org} — changed: {', '.join(org_changed)}", api_actions.update_organization, (org, update_spec)))
+
         c_teams = set(c_org.get("teams", {}).keys())
         d_teams = set(d_org.get("teams", {}).keys())
         
@@ -106,7 +153,15 @@ def run_engine(options: EngineOptions):
                     t_id = api_actions.find_team_id(o, t)
                     if t_id: api_actions.remove_team_member(t_id, mbr)
                 actions.append((f"  👥 [REMOVE MEMBER] Usuario '{m}' <- Equipo: {team} (Org: {org})", rm_m, ()))
-        
+
+            # Diff team properties (excluding members, handled above)
+            c_team_spec = c_org["teams"][team].get("spec", {})
+            d_team_spec = d_org["teams"][team].get("spec", {})
+            team_changed = diff_specs(c_team_spec, d_team_spec, ["permission", "includes_all_repositories", "can_create_org_repo", "units_map"])
+            if team_changed:
+                update_spec = {f: d_team_spec[f] for f in team_changed}
+                actions.append((f"  🔄 [UPDATE] Team: {team} (Org: {org}) — changed: {', '.join(team_changed)}", api_actions.update_team, (org, team, update_spec)))
+
         c_repos = set(c_org.get("repositories", {}).keys())
         d_repos = set(d_org.get("repositories", {}).keys())
         
@@ -115,6 +170,14 @@ def run_engine(options: EngineOptions):
                 
         for repo in (c_repos - d_repos):
             actions.append((f"  ➖ [DELETE] Repository: {repo} (Org: {org})", api_actions.delete_org_repo, (org, repo)))
+
+        for repo in d_repos.intersection(c_repos):
+            c_repo_spec = c_org["repositories"][repo].get("spec", {})
+            d_repo_spec = d_org["repositories"][repo].get("spec", {})
+            repo_changed = diff_specs(c_repo_spec, d_repo_spec, ["description", "private", "default_branch"])
+            if repo_changed:
+                update_spec = {f: d_repo_spec[f] for f in repo_changed}
+                actions.append((f"  🔄 [UPDATE] Repository: {repo} (Org: {org}) — changed: {', '.join(repo_changed)}", api_actions.update_repo, (org, repo, update_spec)))
 
     for msg, func, args in actions:
         print(msg)
