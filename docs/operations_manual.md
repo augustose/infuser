@@ -13,6 +13,13 @@ Any alteration to the Gitea infrastructure (creating repositories, modifying tea
 
 ## 2. Operations for the Engine Administrator
 
+### Interactive Launcher
+Instead of remembering individual script commands, you can use the interactive launcher:
+```bash
+uv run main.py
+```
+It presents a numbered menu with all available scripts and a short description of each one. Select an option by number to run it. This is the recommended way to interact with Infuser from the terminal.
+
 ### Running the Reconciler Manually
 To force or test a synchronization from your local terminal (`uv` is required):
 
@@ -67,6 +74,7 @@ Creates an "Access Matrix" crossing Projects (rows) and Users (columns), extract
 
 | Script | Purpose | Command |
 |--------|---------|---------|
+| `main.py` | Interactive launcher — presents a menu with all scripts and their descriptions | `uv run main.py` |
 | `scripts/core_engine.py` | Reconciliation engine — compares desired state (YAML) against local memory and applies changes to Gitea | `uv run scripts/core_engine.py [--apply] [--auto-approve]` |
 | `scripts/export_state.py` | Exports the current live Gitea state (users, orgs, repos, protections) into YAML files under `infuser-config/` | `uv run scripts/export_state.py` |
 | `scripts/generate_report.py` | General visual status report with collapsible sections per org/repo showing teams, permissions and branch protections | `uv run scripts/generate_report.py` |

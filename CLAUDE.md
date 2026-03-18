@@ -12,6 +12,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install dependencies
 uv sync
 
+# Interactive launcher (recommended — shows all scripts with descriptions)
+uv run main.py
+
 # Dry-run reconciliation (default safe mode, shows execution plan)
 uv run scripts/core_engine.py
 
@@ -28,6 +31,7 @@ uv run scripts/export_state.py
 uv run scripts/generate_report.py
 uv run scripts/generate_user_report.py
 uv run scripts/generate_matrix_report.py
+uv run scripts/generate_repo_grid.py
 ```
 
 No test framework or linter is currently configured.
