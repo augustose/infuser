@@ -46,6 +46,34 @@ Instead of creating users, teams, and repositories manually through the web inte
    ```
 4. Edit the `.env` file and insert your personal admin `GITEA_READ_TOKEN`/`GITEA_WRITE_TOKEN` and adjust the `GITEA_URL`.
 
+### Usage
+
+The easiest way to use Infuser is through the interactive launcher:
+```bash
+uv run main.py
+```
+It displays a numbered menu with all available actions and a short description for each one. Simply select an option by number.
+
+You can also run scripts directly:
+```bash
+# Show execution plan without making changes (dry-run)
+uv run scripts/core_engine.py
+
+# Apply changes to Gitea (with confirmation prompt)
+uv run scripts/core_engine.py --apply
+
+# Export current Gitea state to local YAML files
+uv run scripts/export_state.py
+
+# Generate reports (saved under output/reports/)
+uv run scripts/generate_report.py           # Visual status report
+uv run scripts/generate_user_report.py      # User access / offboarding report
+uv run scripts/generate_matrix_report.py    # Access matrix (CSV + Markdown)
+uv run scripts/generate_repo_grid.py        # Repository grid (CSV + Markdown)
+```
+
+For a complete reference of all scripts and options, see the [Operations Manual](docs/operations_manual.md).
+
 ## Project Documentation
 
 All technical and architectural documentation resides in the `docs/` folder. We recommend reviewing the following fundamental documents:
