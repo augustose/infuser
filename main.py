@@ -2,6 +2,13 @@ import os
 import subprocess
 import sys
 
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt, Confirm
+from rich.table import Table
+
+console = Console()
+
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".infuser_state.json")
 
 SCRIPTS = [
@@ -35,55 +42,84 @@ SCRIPTS = [
 ]
 
 
+def clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def show_menu():
+    clear_screen()
+    console.print(Panel(
+        "[bold white]Infuser[/bold white]\n"
+        "[dim]Infrastructure as Code for Gitea / Forgejo[/dim]",
+        style="bold cyan",
+        padding=(1, 4),
+    ))
+    console.print()
+
+    table = Table(show_header=True, header_style="bold magenta", expand=True)
+    table.add_column("#", style="bold", width=4, justify="right")
+    table.add_column("Action", style="bold")
+    table.add_column("Description", style="dim")
+
+    for i, (name, desc, _path, _args) in enumerate(SCRIPTS, 1):
+        table.add_row(str(i), name, desc)
+
+    table.add_row("0", "[red]Exit[/red]", "Quit the launcher")
+
+    console.print(table)
+    console.print()
+
+
 def reset_local_memory():
     if os.path.exists(STATE_FILE):
         os.remove(STATE_FILE)
-        print("Local memory deleted (.infuser_state.json removed).")
+        console.print("[yellow]Local memory deleted (.infuser_state.json removed).[/yellow]")
     else:
-        print("No local memory file found, nothing to delete.")
+        console.print("[yellow]No local memory file found, nothing to delete.[/yellow]")
 
-    print("Rebuilding memory from current YAML files...\n")
+    console.print("Rebuilding memory from current YAML files...\n")
     subprocess.run([sys.executable, "scripts/core_engine.py", "--apply", "--auto-approve"])
-    print("\nLocal memory has been reset.")
+    console.print("\n[green]Local memory has been reset.[/green]")
+
+
+def run_script(idx):
+    name, _desc, path, args = SCRIPTS[idx]
+
+    clear_screen()
+    console.print(Panel(f"[bold]{name}[/bold]", style="bold green", padding=(0, 2)))
+    console.print()
+
+    if path is None:
+        if not Confirm.ask("[yellow]This will delete local memory and rebuild it. Continue?[/yellow]", default=False):
+            console.print("[red]Cancelled.[/red]")
+            return
+        reset_local_memory()
+    else:
+        subprocess.run([sys.executable, path] + args)
 
 
 def main():
-    print("========================================")
-    print("  Infuser - Available Scripts")
-    print("========================================\n")
+    while True:
+        show_menu()
 
-    for i, (name, desc, _path, _args) in enumerate(SCRIPTS, 1):
-        print(f"  {i}. {name}")
-        print(f"     {desc}\n")
+        choice = Prompt.ask("Select an option", default="0")
 
-    print(f"  0. Exit\n")
+        if choice == "0":
+            clear_screen()
+            console.print("[bold cyan]Bye.[/bold cyan]")
+            break
 
-    choice = input("Select an option: ").strip()
+        try:
+            idx = int(choice) - 1
+            if idx < 0 or idx >= len(SCRIPTS):
+                raise ValueError
+        except ValueError:
+            console.print("[red]Invalid option.[/red]")
+            console.input("\nPress Enter to continue...")
+            continue
 
-    if choice == "0" or choice == "":
-        print("Bye.")
-        return
-
-    try:
-        idx = int(choice) - 1
-        if idx < 0 or idx >= len(SCRIPTS):
-            raise ValueError
-    except ValueError:
-        print("Invalid option.")
-        return
-
-    name, _desc, path, args = SCRIPTS[idx]
-
-    if path is None:
-        confirm = input("This will delete local memory and rebuild it. Continue? (y/n): ").strip().lower()
-        if confirm not in ("y", "yes", "s", "si"):
-            print("Cancelled.")
-            return
-        reset_local_memory()
-        return
-
-    print(f"\n>> Running: {name}\n")
-    subprocess.run([sys.executable, path] + args)
+        run_script(idx)
+        console.input("\n[dim]Press Enter to return to menu...[/dim]")
 
 
 if __name__ == "__main__":
