@@ -3,7 +3,7 @@
 This document defines the technical architecture specification of the Infuser engine.
 
 ## 1. Overview
-Infuser is an Infrastructure as Code (IaC) engine designed to interact bidirectionally between a central Git configuration repository (`infuser-config`) and the target Gitea instance (`gitea.alithya.com`).
+Infuser is an Infrastructure as Code (IaC) engine designed to interact bidirectionally between a central Git configuration repository (`infuser-config`) and the target Gitea instance.
 
 It is based on the principle that the YAML files hosted in the repository form the **Desired State**, and Gitea holds the **Current State**. 
 

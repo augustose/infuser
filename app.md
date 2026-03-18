@@ -1,7 +1,7 @@
 # Infuser (Inspired by Goliac)
 
 ## Objective
-To create an **Infrastructure as Code (IaC)** tool for managing Gitea and Forgejo servers (`gitea.alithya.com`). 
+To create an **Infrastructure as Code (IaC)** tool for managing Gitea and Forgejo servers. 
 
 Inspired by the [Goliac](https://github.com/goliac-project/goliac) project, this system will shift organization management (users, teams, permissions, and repositories) from manual UI configurations to declarative YAML manifests stored in a central Git repository. This provides full visibility into projects, users, organizations, and activity out of the box.
 

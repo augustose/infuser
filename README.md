@@ -6,7 +6,7 @@
 
 > **Inspired by [Goliac](https://github.com/goliac-project/goliac)**: Infuser takes direct inspiration from Goliac's architectural and philosophical principles to offer a native and lightweight solution for Gitea server administration.
 
-Infuser is an **Infrastructure as Code (IaC)** engine specifically designed to manage Gitea and Forgejo servers (`gitea.alithya.com`).
+Infuser is an **Infrastructure as Code (IaC)** engine specifically designed to manage Gitea and Forgejo servers.
 
 Instead of creating users, teams, and repositories manually through the web interface, Infuser allows you to manage the platform by defining the desired state in YAML files hosted in a central Git repository (`infuser-config`).
 

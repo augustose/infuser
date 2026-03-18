@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-GITEA_URL = os.getenv("GITEA_URL", "https://gitea.alithya.com").rstrip("/")
+GITEA_URL = os.getenv("GITEA_URL", "").rstrip("/")
 GITEA_READ_TOKEN = os.getenv("GITEA_READ_TOKEN", os.getenv("GITEA_TOKEN"))
 GITEA_WRITE_TOKEN = os.getenv("GITEA_WRITE_TOKEN")
 GITEA_ALLOW_WRITES = str(os.getenv("GITEA_ALLOW_WRITES", "false")).lower() in ["true", "1", "yes"]
